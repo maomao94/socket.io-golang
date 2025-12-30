@@ -1,6 +1,7 @@
 package socketio
 
 import (
+	"context"
 	"errors"
 	"io"
 	"sync"
@@ -56,6 +57,7 @@ type Socket struct {
 	listeners listeners
 	pingTime  time.Duration
 	dispose   []func()
+	Context   context.Context
 	Join      func(room string)
 	Leave     func(room string)
 	To        func(room string) *Room

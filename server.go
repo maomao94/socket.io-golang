@@ -107,6 +107,7 @@ func (s *Io) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				list: make(map[string][]eventCallback),
 			},
 			pingTime: s.pingInterval,
+			Context:  r.Context(),
 		}
 		defer socket.disconnect()
 		socket.dispose = append(socket.dispose, func() {
