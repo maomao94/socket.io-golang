@@ -125,6 +125,9 @@ func (s *Socket) disconnect() {
 func (s *Socket) engineWrite(t engineio.PacketType, arg ...interface{}) error {
 	s.Lock()
 	defer s.Unlock()
+	if s.Conn == nil {
+		return errors.New("socket has disconnected")
+	}
 	w, err := s.Conn.nextWriter(websocket.TextMessage)
 	if err != nil {
 		return err
@@ -136,6 +139,9 @@ func (s *Socket) engineWrite(t engineio.PacketType, arg ...interface{}) error {
 func (s *Socket) writer(t socket_protocol.PacketType, arg ...interface{}) error {
 	s.Lock()
 	defer s.Unlock()
+	if s.Conn == nil {
+		return errors.New("socket has disconnected")
+	}
 	w, err := s.Conn.nextWriter(websocket.TextMessage)
 	if err != nil {
 		return err
