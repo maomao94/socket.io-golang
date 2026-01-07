@@ -19,6 +19,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/websocket/v2"
 	"github.com/google/uuid"
+	"github.com/reugn/async"
 
 	gWebsocket "github.com/gorilla/websocket"
 )
@@ -98,8 +99,9 @@ func (s *Io) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		socket := Socket{
-			Id:  s.randomUUID(),
-			Nps: "/",
+			lock: async.NewPriorityLock(3),
+			Id:   s.randomUUID(),
+			Nps:  "/",
 			Conn: &Conn{
 				http: c,
 			},
@@ -107,7 +109,7 @@ func (s *Io) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				list: make(map[string][]eventCallback),
 			},
 			pingTime: s.pingInterval,
-			Context:  r.Context(),
+			Ctx:      r.Context(),
 		}
 		defer socket.disconnect()
 		socket.dispose = append(socket.dispose, func() {
@@ -282,8 +284,9 @@ func (s *Io) new() func(ctx *fiber.Ctx) error {
 		}
 
 		socket := Socket{
-			Id:  s.randomUUID(),
-			Nps: "/",
+			lock: async.NewPriorityLock(3),
+			Id:   s.randomUUID(),
+			Nps:  "/",
 			Conn: &Conn{
 				fasthttp: c,
 			},
@@ -395,6 +398,7 @@ func (s *Io) handlerMessage(socket *Socket, message string) error {
 			socket_nps := socket
 			if namespace != "/" {
 				socketWithNamespace := Socket{
+					lock: socket.lock,
 					Id:   socket.Id,
 					Nps:  namespace,
 					Conn: socket.Conn,
@@ -402,6 +406,7 @@ func (s *Io) handlerMessage(socket *Socket, message string) error {
 						list: make(map[string][]eventCallback),
 					},
 					pingTime: s.pingInterval,
+					Ctx:      socket.Ctx,
 				}
 				socket_nps = &socketWithNamespace
 

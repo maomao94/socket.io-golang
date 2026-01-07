@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"io"
-	"sync"
 	"time"
 
 	"github.com/doquangtan/socketio/v4/engineio"
 	"github.com/doquangtan/socketio/v4/socket_protocol"
 	"github.com/gofiber/websocket/v2"
 	gWebsocket "github.com/gorilla/websocket"
+	"github.com/reugn/async"
 )
 
 type Conn struct {
@@ -49,7 +49,7 @@ func (c *Conn) close() error {
 }
 
 type Socket struct {
-	sync.RWMutex
+	lock      *async.PriorityLock
 	Id        string
 	Nps       string
 	Conn      *Conn
@@ -57,7 +57,7 @@ type Socket struct {
 	listeners listeners
 	pingTime  time.Duration
 	dispose   []func()
-	Context   context.Context
+	Ctx       context.Context
 	Join      func(room string)
 	Leave     func(room string)
 	To        func(room string) *Room
@@ -123,8 +123,8 @@ func (s *Socket) disconnect() {
 }
 
 func (s *Socket) engineWrite(t engineio.PacketType, arg ...interface{}) error {
-	s.Lock()
-	defer s.Unlock()
+	s.lock.Lock()
+	defer s.lock.Unlock()
 	if s.Conn == nil {
 		return errors.New("socket has disconnected")
 	}
@@ -137,8 +137,8 @@ func (s *Socket) engineWrite(t engineio.PacketType, arg ...interface{}) error {
 }
 
 func (s *Socket) writer(t socket_protocol.PacketType, arg ...interface{}) error {
-	s.Lock()
-	defer s.Unlock()
+	s.lock.LockP(2)
+	defer s.lock.Unlock()
 	if s.Conn == nil {
 		return errors.New("socket has disconnected")
 	}
