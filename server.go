@@ -109,7 +109,6 @@ func (s *Io) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				list: make(map[string][]eventCallback),
 			},
 			pingTime: s.pingInterval,
-			Ctx:      r.Context(),
 		}
 		defer socket.disconnect()
 		socket.dispose = append(socket.dispose, func() {
@@ -406,7 +405,6 @@ func (s *Io) handlerMessage(socket *Socket, message string) error {
 						list: make(map[string][]eventCallback),
 					},
 					pingTime: s.pingInterval,
-					Ctx:      socket.Ctx,
 				}
 				socket_nps = &socketWithNamespace
 
@@ -429,6 +427,7 @@ func (s *Io) handlerMessage(socket *Socket, message string) error {
 					// continue
 					return nil
 				}
+				socket_nps.Handshake = dataJson
 			}
 
 			socket.dispose = append(socket.dispose, func() {
